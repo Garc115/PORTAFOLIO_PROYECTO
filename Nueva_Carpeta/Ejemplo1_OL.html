@@ -1,0 +1,30 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+
+    <meta charset="utf-8">
+    <title>Ejemplo</title>  
+    <link rel="stylesheet" type="text/css" href="https://openlayers.org/en/v6.5.0/css/ol.css">
+    <script type="text/javascript" src="https://openlayers.org/en/v6.5.0/build/ol.js"></script>
+    <script type="text/javascript" src="capas_inegiwmsOL.js"></script>	  
+    <link rel="stylesheet" type="text/css" href="styleOL.css">
+</head>
+<body onload="inicializa();">
+    <div style="width: 100%; height: 500px" id="map"></div>
+   <div style="position: absolute; top:40%;left: 24px; width: 250px; height: 195px; background-color: white; padding: 16px"> 
+                <h5 style="padding-left: 0px;">Selecciona las capas que quieras mostrar sobre el mapa</h5>
+                 
+                <!-- Como ejemplo se muestran las siguientes tres capas, para ver todas las capas disponibles visita la siguiente ruta: https://www.inegi.org.mx/servicios/api_openLayers.html -->
+                 
+                <h5 style="font-size: 14px; font-weight:bold;">División territorial</h5>
+                <p style="font-size: 14px;"><input id="chkEstatal" name="capas" type="checkBox" onclick="ActivaCapa(this);"/>Estatal </p>
+                <p style="font-size: 14px;"><input  id="chkMunicipal" name="capas" type="checkBox" onclick="ActivaCapa(this);"/>Municipal</p>            
+                 
+        
+            </div>
+           <div style="position: absolute;top:80px;left: 18px;" class="zoom"><span id="zoom">5</span></div>
+ 
+</body>
+
+</html>

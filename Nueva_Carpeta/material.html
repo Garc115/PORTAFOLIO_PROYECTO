@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <!-- basic -->
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <!-- mobile metas -->
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+      <!-- site metas -->
+      <title>Registro de Material</title>
+      <meta name="keywords" content="">
+      <meta name="description" content="">
+      <meta name="author" content="">
+      <!-- bootstrap css -->
+      <link rel="stylesheet" href="css/bootstrap.min.css">
+      <!-- style css -->
+      <link rel="stylesheet" href="css/style.css">
+      <!-- Responsive-->
+      <link rel="stylesheet" href="css/responsive.css">
+      <!-- fevicon -->
+      <link rel="icon" href="images/fevicon.png" type="image/gif" />
+      <!-- Scrollbar Custom CSS -->
+      <link rel="stylesheet" href="css/jquery.mCustomScrollbar.min.css">
+      <!-- Font Awesome -->
+      <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" media="screen">
+      <style>
+         html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+         }
+         .main-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+         }
+         .banner_main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+         }
+         .table-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            overflow-x: auto;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+         }
+         table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+         }
+         table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+         }
+         table th {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+         }
+         table tr:nth-child(even) {
+            background: #f9f9f9;
+         }
+         footer {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+         }
+         .social_icon li {
+            display: inline-block;
+            margin: 0 10px;
+         }
+         .social_icon li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+         }
+      </style>
+   </head>
+   <body class="main-layout" onload="fetchMaterialData()">
+      <!-- header -->
+      <header>
+         <div class="header">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-12 col-sm-3 col logo_section">
+                     <div class="full">
+                        <div class="center-desk">
+                           <div class="logo">
+                              <a href="index.html"><img src="images/logo.png" alt="#" /></a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </header>
+      <!-- end header -->
+      <!-- banner -->
+      <section class="banner_main">
+         <div class="table-container">
+            <h2 style="text-align: center; margin-bottom: 20px;">Lista de Material</h2>
+            <table id="materialTable">
+               <thead>
+                  <tr>
+                     <th>ID </th>
+                     <th>Nombre</th>
+                     <th>Cantidad Disponible</th>
+                     <th>Uso</th>
+                     <th>Fecha de Adquisición</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <!-- Aquí se llenarán los datos dinámicamente -->
+               </tbody>
+            </table>
+         </div>
+      </section>
+      <!-- end banner -->
+      <!-- footer -->
+      <footer>
+         <div class="footer">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-12">
+                     <ul class="social_icon">
+                        <li><a href="https://www.facebook.com/cappadociamineriaytopografia"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+                        <li><a href="https://www.instagram.com/cappadociamineriaytopografia/"><i class="fa fa-instagram" aria-hidden="true"></i></a></li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </footer>
+      <!-- end footer -->
+      <!-- Javascript -->
+      <script>
+         async function fetchMaterialData() {
+    try {
+        // Realiza la solicitud al archivo PHP
+        const response = await fetch('fetch_material.php');
+        console.log(response);  // Verifica si la respuesta es correcta
+
+        if (!response.ok) {
+            throw new Error('Error al cargar los datos');
+        }
+
+        const data = await response.json();  // Convierte la respuesta JSON
+        console.log(data);  // Verifica los datos recibidos
+
+        // Obtener el cuerpo de la tabla donde se agregarán los datos
+        const tableBody = document.querySelector("#materialTable tbody");
+        tableBody.innerHTML = '';  // Limpiar la tabla antes de agregar nuevos datos
+
+        // Llenar la tabla con los datos obtenidos
+        data.forEach(material => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${material.id}</td>
+                <td>${material.nombre}</td>
+                <td>${material.cantidad}</td>
+                <td>${material.uso}</td>
+                <td>${material.fecha}</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Error al obtener los datos:", error);
+    }
+}
+
+     </script>
+}
+
+
+      </script>
+      <script src="js/jquery.min.js"></script>
+      <script src="js/bootstrap.bundle.min.js"></script>
+      <script src="js/jquery-3.0.0.min.js"></script>
+      <script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
+      <script src="js/custom.js"></script>
+   </body>
+</html>

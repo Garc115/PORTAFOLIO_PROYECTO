@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+      <title>Registro de Material</title>
+      <link rel="stylesheet" href="css/bootstrap.min.css">
+      <link rel="stylesheet" href="css/style.css">
+      <link rel="stylesheet" href="css/responsive.css">
+      <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" media="screen">
+      <link rel="stylesheet" type="text/css" href="https://openlayers.org/en/v6.5.0/css/ol.css">
+      <script src="https://openlayers.org/en/v6.5.0/build/ol.js"></script>
+      <script src="capas_inegiwmsOL.js"></script>
+      <link rel="stylesheet" type="text/css" href="styleOL.css"/>
+      
+      <style>
+         html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+         }
+         .main-layout {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+         }
+         .banner_main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+         }
+         .table-container, .form-container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            border-radius: 10px;
+         }
+         table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+         }
+         table th, table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+         }
+         table th {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+         }
+         table tr:nth-child(even) {
+            background: #f9f9f9;
+         }
+         .form-container label {
+            display: block;
+            margin: 10px 0 5px;
+         }
+         .form-container input, .form-container select, .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+         }
+         footer {
+            background: #333;
+            color: #fff;
+            text-align: center;
+            padding: 10px 0;
+            position: relative;
+         }
+         .social_icon li {
+            display: inline-block;
+            margin: 0 10px;
+         }
+         .social_icon li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+         }
+         #map {
+            width: 100%;
+            height: 400px;
+         }
+      </style>
+   </head>
+   <body class="main-layout" onload="fetchMaterialData()">
+      <header>
+         <div class="header">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-12 col-sm-3 col logo_section">
+                     <div class="full">
+                        <div class="center-desk">
+                           <div class="logo">
+                              <a href="index.html"><img src="images/logo.jpg" alt="#" /></a>
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </header>
+      <section class="banner_main">
+         <div class="table-container">
+            <h2 style="text-align: center;">Selecciona un Material</h2>
+            <select id="materialDropdown" onchange="displaySelectedMaterial()">
+               <option value="">Selecciona un material...</option>
+               <!-- Opciones dinámicas -->
+           </select>
+           
+           <div class="table-container" id="selectedMaterialContainer" style="display: none;">
+               <h2 style="text-align: center;">Detalles del Material Seleccionado</h2>
+               <table id="materialTable">
+                   <thead>
+                       <tr>
+                           <th>ID o Código Único</th>
+                           <th>Nombre</th>
+                           <th>Cantidad Disponible</th>
+                           <th>Uso</th>
+                           <th>Estado</th>
+                           <th>Fecha de Adquisición</th>
+                       </tr>
+                   </thead>
+                   <tbody>
+                       <!-- Aquí se llenarán los datos dinámicamente -->
+                   </tbody>
+               </table>
+           </div>
+
+           <!-- New Map Container for INEGI's OpenLayers API -->
+           <div id="openLayersContainer" style="display: none; position: relative;">
+            <!-- The map will be displayed here -->
+            <div id="map"></div>
+            <!-- Example layer controls -->
+            <div style=" top:40%; left: 24px; width: 250px; height: 195px; background-color: white; padding: 16px;">
+               <h3>Select the layers you want to display on the map</h3>
+               <h5>Territorial division</h5>
+               <p><input type="checkbox" id="chkEstatal" name="capas" onclick="ActivaCapa(this);"> State</p>
+               <p><input id="chkMunicipal" name="capas" type="checkbox" onclick="ActivaCapa(this);"> Municipal</p>
+            </div>
+            <div style="position: absolute; top:80px; left: 18px;" class="zoom">
+               <span id="zoom">5</span>
+            </div>
+         </div>
+           
+           <div class="form-container" id="reservationForm" style="display: none;">
+            <h2 style="text-align: center;">Formulario de Reserva</h2>
+            <form id="reservationForm" onsubmit="submitReservation(event)">
+               <label for="name">Nombre del Solicitante</label>
+               <input type="text" id="name" placeholder="Ingresa tu nombre" required>
+           
+               <label for="quantity">Cantidad a Llevar</label>
+               <input type="number" id="quantity" min="1" placeholder="Cantidad" required>
+           
+               <label for="email">Correo Electrónico</label>
+               <input type="email" id="email" placeholder="Ingresa tu correo" required>
+           
+               <label for="state">Estado</label>
+               <input type="state" id="state" placeholder="Ingresa tu estado" required>
+               
+               <!-- Campo para seleccionar la fecha -->
+               <label for="reservationDate">Fecha de Reserva</label>
+               <input type="date" id="reservationDate" required>
+           
+               <button type="submit">Reservar Material</button>
+           </form>
+           
+           
+        </div>
+        
+      </section>
+      <footer>
+         <div class="footer">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-12">
+                     <ul class="social_icon">
+                        <li><a href="https://www.facebook.com/cappadociamineriaytopografia"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+                        <li><a href="https://www.instagram.com/cappadociamineriaytopografia/"><i class="fa fa-instagram" aria-hidden="true"></i></a></li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </footer>
+      <script>
+         let materials = []; // Variable global para almacenar los materiales
+
+// Función para cargar materiales y llenar el dropdown
+async function fetchMaterialData() {
+   /*
+    try {
+        const response = await fetch('fetch_material.php');
+        if (!response.ok) {
+            throw new Error('Error al cargar los datos');
+        }
+
+        materials = await response.json(); // Almacena los materiales en la variable global
+
+        const materialDropdown = document.getElementById('materialDropdown');
+        materialDropdown.innerHTML = '<option value="">Selecciona un material...</option>'; // Limpia opciones previas
+
+        // Agrega opciones al dropdown
+        materials.forEach(material => {
+            const option = document.createElement('option');
+            option.value = material.id; // ID como valor
+            option.textContent = `${material.id} - ${material.nombre}`; // ID y Nombre como texto
+            materialDropdown.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error al obtener los datos:", error);
+    }
+        */
+       // Datos de prueba
+       materials = [
+           { id: "1", nombre: "Material A", cantidad: 100, uso: "Uso de Material A", estado: "San Luis Potosí", fecha: "2025-01-01" },
+           { id: "2", nombre: "Material B", cantidad: 200, uso: "Uso de Material B", estado: "Guanajuato", fecha: "2025-02-15" },
+           { id: "3", nombre: "Material C", cantidad: 50, uso: "Uso de Material C", estado: "Aguascalientes", fecha: "2025-03-10" },
+           { id: "4", nombre: "Material D", cantidad: 50, uso: "Uso de Material D", estado: "Baja California", fecha: "2025-03-10" },
+           { id: "5", nombre: "Material E", cantidad: 50, uso: "Uso de Material E", estado: "BCS", fecha: "2025-03-10" },
+           { id: "6", nombre: "Material F", cantidad: 150, uso: "Uso de Material F", estado: "Campeche", fecha: "2025-03-10" },
+           { id: "7", nombre: "Material G", cantidad: 320, uso: "Uso de Material G", estado: "CDZ", fecha: "2025-03-10" },
+           { id: "8", nombre: "Material H", cantidad: 320, uso: "Uso de Material H", estado: "Colima", fecha: "2025-03-10" },
+           { id: "9", nombre: "Material I", cantidad: 178, uso: "Uso de Material I", estado: "Chiapas", fecha: "2025-03-10" },
+           { id: "10", nombre: "Material J", cantidad: 24, uso: "Uso de Material J", estado: "Chihuahua", fecha: "2025-03-10" },
+           { id: "11", nombre: "Material K", cantidad: 32, uso: "Uso de Material K", estado: "CDMX", fecha: "2025-03-10" },
+           { id: "12", nombre: "Material L", cantidad: 320, uso: "Uso de Material L", estado: "Durango", fecha: "2025-03-10" },
+           { id: "13", nombre: "Material M", cantidad: 529, uso: "Uso de Material M", estado: "Guanajuato", fecha: "2025-03-10" },
+           { id: "14", nombre: "Material N", cantidad: 231, uso: "Uso de Material N", estado: "Guerrero", fecha: "2025-03-10" },
+           { id: "15", nombre: "Material O", cantidad: 741, uso: "Uso de Material O", estado: "Hidalgo", fecha: "2025-03-10" },
+           { id: "16", nombre: "Material P", cantidad: 120, uso: "Uso de Material P", estado: "Jalisco", fecha: "2025-03-10" },
+           { id: "17", nombre: "Material Q", cantidad: 56, uso: "Uso de Material Q", estado: "Michoacan", fecha: "2025-03-10" },
+           { id: "18", nombre: "Material R", cantidad: 320, uso: "Uso de Material H", estado: "Morelos", fecha: "2025-03-10" },
+           { id: "19", nombre: "Material S", cantidad: 87, uso: "Uso de Material S", estado: "Nayarit", fecha: "2025-03-10" },
+           { id: "20", nombre: "Material T", cantidad: 320, uso: "Uso de Material T", estado: "NL", fecha: "2025-03-10" },
+           { id: "21", nombre: "Material U", cantidad: 980, uso: "Uso de Material U", estado: "Oaxaca", fecha: "2025-03-10" },
+           { id: "22", nombre: "Material V", cantidad: 393, uso: "Uso de Material V", estado: "Puebla", fecha: "2025-03-10" },
+           { id: "23", nombre: "Material W", cantidad: 320, uso: "Uso de Material W", estado: "Queretaro", fecha: "2025-03-10" },
+           { id: "24", nombre: "Material X", cantidad: 320, uso: "Uso de Material X", estado: "QR", fecha: "2025-03-10" },
+           { id: "25", nombre: "Material Y", cantidad: 320, uso: "Uso de Material Y", estado: "SLP", fecha: "2025-03-10" },
+           { id: "26", nombre: "Material Z", cantidad: 34, uso: "Uso de Material Z", estado: "Sinaloa", fecha: "2025-03-10" },
+       ];
+
+       // Llenar el dropdown
+       const materialDropdown = document.getElementById('materialDropdown');
+       materialDropdown.innerHTML = '<option value="">Selecciona un material...</option>'; // Limpia opciones previas
+
+       // Agrega opciones al dropdown
+       materials.forEach(material => {
+           const option = document.createElement('option');
+           option.value = material.id; // ID como valor
+           option.textContent = `${material.id} - ${material.nombre}`; // ID y Nombre como texto
+           materialDropdown.appendChild(option);
+       });
+}
+
+let mapInitialized = false;
+
+// Función para mostrar el material seleccionado en la tabla
+function displaySelectedMaterial() {
+    const materialDropdown = document.getElementById('materialDropdown');
+    const selectedId = materialDropdown.value; // Obtiene el ID seleccionado
+   
+    if (selectedId) {
+        // Encuentra el material seleccionado en la lista
+        const selectedMaterial = materials.find(material => material.id == selectedId);
+
+        if (selectedMaterial) {
+            const tableBody = document.querySelector("#materialTable tbody");
+            tableBody.innerHTML = `
+                <tr>
+                    <td>${selectedMaterial.id}</td>
+                    <td>${selectedMaterial.nombre}</td>
+                    <td>${selectedMaterial.cantidad}</td>
+                    <td>${selectedMaterial.uso}</td>
+                    <td>${selectedMaterial.estado}</td>
+                    <td>${selectedMaterial.fecha}</td>
+                </tr>
+            `;
+
+            // Muestra la tabla
+            document.getElementById('selectedMaterialContainer').style.display = 'block';
+
+            // Muestra el contenedor del mapa
+            document.getElementById('openLayersContainer').style.display = 'block';
+
+            // Verifica si el mapa ya ha sido inicializado
+            if (!mapInitialized) {
+                // Llama a la función de inicialización del mapa (asegúrate de que la función "inicializa" esté definida en layers_inegiwmsOL.js)
+                if (typeof inicializa === 'function') {
+                    inicializa();
+                    mapInitialized = true; // Establece la bandera a true para indicar que el mapa ya se inicializó
+                }
+            }
+
+            
+            // Muestra el formulario de reserva
+            document.getElementById('reservationForm').style.display = 'block';
+
+            // Prellenar el formulario con datos del material si es necesario (opcional)
+            document.getElementById('name').value = ''; // Limpia el campo de nombre
+            document.getElementById('quantity').value = ''; // Limpia el campo de cantidad
+            document.getElementById('email').value = ''; // Limpia el campo de correo
+        }
+
+
+        //San Luis Potosi
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "san luis potosí") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrSLP) {
+                    var zIndex = 165;
+                    lyrSLP = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/slp/slp.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrSLP.setZIndex(zIndex);
+                    map.addLayer(lyrSLP);
+                    console.log("Capa SLP agregada por selección de San Luis Potosí");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrSLP) {
+                    map.removeLayer(lyrSLP);
+                    lyrSLP = null;
+                    console.log("Capa SLP removida porque el estado no es San Luis Potosí");
+                }
+            }
+
+
+        //Aguascalientes
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "aguascalientes") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrA) {
+                    var zIndex = 165;
+                    lyrA = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Aguascalientes/Aguascalientes.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrA.setZIndex(zIndex);
+                    map.addLayer(lyrA);
+                    console.log("Capa Aguascalientes agregada por selección de Aguascalientes");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrA) {
+                    map.removeLayer(lyrA);
+                    lyrA = null;
+                    console.log("Capa Aguascalientes removida porque el estado no es Aguascalientes");
+                }
+            }
+            
+        //Baja California
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "baja california") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrBC) {
+                    var zIndex = 165;
+                    lyrBC = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Baja_California/Baja_California.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrBC.setZIndex(zIndex);
+                    map.addLayer(lyrBC);
+                    console.log("Capa BC agregada por seleccion de BC");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrBC) {
+                    map.removeLayer(lyrBC);
+                    lyrBC = null;
+                    console.log("Capa BC removida porque el estado no es BC");
+                }
+            }
+
+        //Baja California Sur
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "bcs") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrBCS) {
+                    var zIndex = 165;
+                    lyrBCS = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/BCS/BCS.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrBCS.setZIndex(zIndex);
+                    map.addLayer(lyrBCS);
+                    console.log("Capa BCS agregada por seleccion de BCS");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrBCS) {
+                    map.removeLayer(lyrBCS);
+                    lyrBCS = null;
+                    console.log("Capa BCS removida porque el estado no es BCS");
+                }
+            }
+
+        //Campeche
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "campeche") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrC) {
+                    var zIndex = 165;
+                    lyrC = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Campeche/Campeche.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrC.setZIndex(zIndex);
+                    map.addLayer(lyrC);
+                    console.log("Capa Campeche agregada por selección de Campeche");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrC) {
+                    map.removeLayer(lyrC);
+                    lyrC = null;
+                    console.log("Capa Campeche removida porque el estado no es Campeche");
+                }
+            }
+
+        //Coahuila de Zaragoza
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "cdz") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrCDZ) {
+                    var zIndex = 165;
+                    lyrCDZ = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/CDZ/CDZ.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrCDZ.setZIndex(zIndex);
+                    map.addLayer(lyrCDZ);
+                    console.log("Capa CDZ agregada por selección de CDZ");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrCDZ) {
+                    map.removeLayer(lyrCDZ);
+                    lyrCDZ = null;
+                    console.log("Capa CDZ removida porque el estado no es CDZ");
+                }
+            }
+
+        //Colima
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "colima") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrColima) {
+                    var zIndex = 165;
+                    lyrColima = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Colima/Colima.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrColima.setZIndex(zIndex);
+                    map.addLayer(lyrColima);
+                    console.log("Capa Colima agregada por selección de Colima");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrColima) {
+                    map.removeLayer(lyrColima);
+                    lyrColima = null;
+                    console.log("Capa Colima removida porque el estado no es Colima");
+                }
+            }
+
+        //Chiapas
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "chiapas") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrChiapas) {
+                    var zIndex = 165;
+                    lyrChiapas = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Chiapas/Chiapas.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrChiapas.setZIndex(zIndex);
+                    map.addLayer(lyrChiapas);
+                    console.log("Capa Chiapas agregada por selección de Chiapas");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrChiapas) {
+                    map.removeLayer(lyrChiapas);
+                    lyrChiapas = null;
+                    console.log("Capa  removida porque el estado no es ");
+                }
+            }
+
+        //Chihuahua
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "chihuahua") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrChihuahua) {
+                    var zIndex = 165;
+                    lyrChihuahua = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Chihuahua/Chihuahua.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrChihuahua.setZIndex(zIndex);
+                    map.addLayer(lyrChihuahua);
+                    console.log("Capa Chiahuahua agregada por selección de Chihuahua");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrChihuahua) {
+                    map.removeLayer(lyrChihuahua);
+                    lyrChihuahua = null;
+                    console.log("Capa Chihuahua removida porque el estado no es Chihuahua");
+                }
+            }
+
+        //CDMX
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "cdmx") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrCDMX) {
+                    var zIndex = 165;
+                    lyrCDMX = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/CDMX/CDMX.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrCDMX.setZIndex(zIndex);
+                    map.addLayer(lyrCDMX);
+                    console.log("Capa CDMX agregada por selección de CDMX");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrCDMX) {
+                    map.removeLayer(lyrCDMX);
+                    lyrCDMX = null;
+                    console.log("Capa CDMX removida porque el estado no es CDMX");
+                }
+            }
+
+        //Durango
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "durango") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrD) {
+                    var zIndex = 165;
+                    lyrD = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Durango/Durango.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrD.setZIndex(zIndex);
+                    map.addLayer(lyrD);
+                    console.log("Capa Durango agregada por selección de Durango");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrD) {
+                    map.removeLayer(lyrD);
+                    lyrD = null;
+                    console.log("Capa Durango removida porque el estado no es Durango");
+                }
+            }
+
+        //Guanajuato
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "guanajuato") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrG) {
+                    var zIndex = 165;
+                    lyrG = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Guanajuato/Guanajuato.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrG.setZIndex(zIndex);
+                    map.addLayer(lyrG);
+                    console.log("Capa Guanajuato agregada por selección de Guanajuato");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrG) {
+                    map.removeLayer(lyrG);
+                    lyrG = null;
+                    console.log("Capa Guanajuato removida porque el estado no es Guanajuato");
+                }
+            }
+
+        //Guerrero
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "guerrero") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrGuerrero) {
+                    var zIndex = 165;
+                    lyrGuerrero = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Guerrero/Guerrero.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrGuerrero.setZIndex(zIndex);
+                    map.addLayer(lyrGuerrero);
+                    console.log("Capa Guerrero agregada por selección de Guerrero");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrGuerrero) {
+                    map.removeLayer(lyrGuerrero);
+                    lyrGuerrero = null;
+                    console.log("Capa Guerrero removida porque el estado no es Guerrero");
+                }
+            }
+
+        //Hidalgo
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "hidalgo") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrH) {
+                    var zIndex = 165;
+                    lyrH = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Hidalgo/Hidalgo.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrH.setZIndex(zIndex);
+                    map.addLayer(lyrH);
+                    console.log("Capa Hidalgo agregada por selección de Hidalgo");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrH) {
+                    map.removeLayer(lyrH);
+                    lyrH = null;
+                    console.log("Capa Hidalgo removida porque el estado no es Hidalgo");
+                }
+            }
+
+        //Jalisco
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "jalisco") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrJ) {
+                    var zIndex = 165;
+                    lyrJ = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Jalisco/Jalisco.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrJ.setZIndex(zIndex);
+                    map.addLayer(lyrJ);
+                    console.log("Capa Jalisco agregada por selección de Jalisco");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrJ) {
+                    map.removeLayer(lyrJ);
+                    lyrJ = null;
+                    console.log("Capa Jalisco removida porque el estado no es Jalisco");
+                }
+            }
+
+        //Michoacan
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "michoacan") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrM) {
+                    var zIndex = 165;
+                    lyrM = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Michoacan/Michoacan.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrM.setZIndex(zIndex);
+                    map.addLayer(lyrM);
+                    console.log("Capa Michoacan agregada por selección de Michoacan");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrM) {
+                    map.removeLayer(lyrM);
+                    lyrM = null;
+                    console.log("Capa Michoacan removida porque el estado no es Michoacan");
+                }
+            }
+
+        //Morelos
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "morelos") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrMorelos) {
+                    var zIndex = 165;
+                    lyrMorelos = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Morelos/Morelos.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrMorelos.setZIndex(zIndex);
+                    map.addLayer(lyrMorelos);
+                    console.log("Capa Morelos agregada por selección de Morelos");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrMorelos) {
+                    map.removeLayer(lyrMorelos);
+                    lyrMorelos = null;
+                    console.log("Capa Morelos removida porque el estado no es Morelos");
+                }
+            }
+
+        //Nayarit
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "nayarit") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrN) {
+                    var zIndex = 165;
+                    lyrN = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Nayarit/Nayarit.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrN.setZIndex(zIndex);
+                    map.addLayer(lyrN);
+                    console.log("Capa Nayarit agregada por selección de Nayarit");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrN) {
+                    map.removeLayer(lyrN);
+                    lyrN = null;
+                    console.log("Capa Nayarit removida porque el estado no es Nayarit");
+                }
+            }
+
+        //Nuevo Leon
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "nl") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrNL) {
+                    var zIndex = 165;
+                    lyrNL = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/NL/NL.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrNL.setZIndex(zIndex);
+                    map.addLayer(lyrNL);
+                    console.log("Capa NL agregada por selección de NL");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrNL) {
+                    map.removeLayer(lyrNL);
+                    lyrNL = null;
+                    console.log("Capa NL removida porque el estado no es NL");
+                }
+            }
+
+        //Oaxaca
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "oaxaca") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrO) {
+                    var zIndex = 165;
+                    lyrO = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Oaxaca/Oaxaca.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrO.setZIndex(zIndex);
+                    map.addLayer(lyrO);
+                    console.log("Capa Oaxaca agregada por selección de Oaxaca");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrO) {
+                    map.removeLayer(lyrO);
+                    lyrO = null;
+                    console.log("Capa Oaxaca removida porque el estado no es Oaxaca");
+                }
+            }
+
+        //Puebla
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "puebla") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrP) {
+                    var zIndex = 165;
+                    lyrP = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Puebla/Puebla.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrP.setZIndex(zIndex);
+                    map.addLayer(lyrP);
+                    console.log("Capa Puebla agregada por selección de Puebla");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrP) {
+                    map.removeLayer(lyrP);
+                    lyrP = null;
+                    console.log("Capa Puebla removida porque el estado no es Puebla");
+                }
+            }
+
+        //Queretaro
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "queretaro") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrQ) {
+                    var zIndex = 165;
+                    lyr = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Queretaro/Queretaro.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrQ.setZIndex(zIndex);
+                    map.addLayer(lyrQ);
+                    console.log("Capa Queretaro agregada por selección de Queretaro");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrQ) {
+                    map.removeLayer(lyrQ);
+                    lyrQ = null;
+                    console.log("Capa Queretaro removida porque el estado no es Queretaro");
+                }
+            }
+
+        //Quintana Roo
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "quintana roo") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrQR) {
+                    var zIndex = 165;
+                    lyrQR = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/QR/QR.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrQR.setZIndex(zIndex);
+                    map.addLayer(lyrQR);
+                    console.log("Capa QR agregada por selección de QR");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrQR) {
+                    map.removeLayer(lyrQR);
+                    lyrQR = null;
+                    console.log("Capa Quintana Roo removida porque el estado no es Quintana Roo");
+                }
+            }
+
+        //Sinaloa
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "sinaloa") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrS) {
+                    var zIndex = 165;
+                    lyrS = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Sinaloa/Sinaloa.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrS.setZIndex(zIndex);
+                    map.addLayer(lyrS);
+                    console.log("Capa Sinaloa agregada por selección de Sinaloa");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrS) {
+                    map.removeLayer(lyrS);
+                    lyrS = null;
+                    console.log("Capa Sinaloa removida porque el estado no es Sinaloa");
+                }
+            }
+
+        //Sonora
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "sonora") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrSonora) {
+                    var zIndex = 165;
+                    lyrSonora = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Sonora/Sonora.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrSonora.setZIndex(zIndex);
+                    map.addLayer(lyrSonora);
+                    console.log("Capa Sonora agregada por selección de Sonora");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrSonora) {
+                    map.removeLayer(lyrSonora);
+                    lyrSonora = null;
+                    console.log("Capa Sonora removida porque el estado no es Sonora");
+                }
+            }
+
+        //Tabasco
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "tabasco") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrT) {
+                    var zIndex = 165;
+                    lyrT = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Tabasco/Tabasco.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrT.setZIndex(zIndex);
+                    map.addLayer(lyrT);
+                    console.log("Capa Tabasco agregada por selección de QR");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyr) {
+                    map.removeLayer(lyr);
+                    lyr = null;
+                    console.log("Capa  removida porque el estado no es ");
+                }
+            }
+
+        //Tamaulipas
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "tamaulipas") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrTamaulipas) {
+                    var zIndex = 165;
+                    lyrTamaulipas = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Tamaulipas/Tamaulipas.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrTamaulipas.setZIndex(zIndex);
+                    map.addLayer(lyrTamaulipas);
+                    console.log("Capa Tamaulipas agregada por selección de Tamaulipas");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrTamaulipas) {
+                    map.removeLayer(lyrTamaulipas);
+                    lyrTamaulipas = null;
+                    console.log("Capa Tamaulipas removida porque el estado no es Tamaulipas");
+                }
+            }
+
+        //Tlaxcala
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "tlaxcala") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrTlaxcala) {
+                    var zIndex = 165;
+                    lyrTlaxcala = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Tlaxcala/Tlaxcala.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrTlaxcala.setZIndex(zIndex);
+                    map.addLayer(lyrTlaxcala);
+                    console.log("Capa Tlaxcala agregada por selección de Tlaxcala");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrTlaxcala) {
+                    map.removeLayer(lyrTlaxcala);
+                    lyrTlaxcala = null;
+                    console.log("Capa Tlaxcala removida porque el estado no es Tlaxcala");
+                }
+            }
+
+        //Veracruz
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "veracruz") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrV) {
+                    var zIndex = 165;
+                    lyrV = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Veracruz/Veracruz.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrV.setZIndex(zIndex);
+                    map.addLayer(lyrV);
+                    console.log("Capa Veracruz agregada por selección de Veracruz");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrV) {
+                    map.removeLayer(lyrV);
+                    lyrV = null;
+                    console.log("Capa Veracruz removida porque el estado no es Veracruz");
+                }
+            }
+
+        //Yucatan
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "yucatan") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrY) {
+                    var zIndex = 165;
+                    lyrY = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Yucatan/Yucatan.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrY.setZIndex(zIndex);
+                    map.addLayer(lyrY);
+                    console.log("Capa Yucatan agregada por selección de Yucatan");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrY) {
+                    map.removeLayer(lyrY);
+                    lyrY = null;
+                    console.log("Capa Yucatan removida porque el estado no es Yucatan");
+                }
+            }
+
+        //Zacatecas
+        if (selectedMaterial.estado && selectedMaterial.estado.trim().toLowerCase() === "zacatecas") {
+                // Si la capa no está ya agregada, se crea y añade
+                if (!lyrZ) {
+                    var zIndex = 165;
+                    lyrZ = new ol.layer.Vector({
+                        source: new ol.source.Vector({
+                            url: 'http://localhost/Zacatecas/Zacatecas.geojson',
+                            format: new ol.format.GeoJSON()
+                        }),
+                        style: new ol.style.Style({
+                            stroke: new ol.style.Stroke({ color: 'blue', width: 2 }),
+                            fill: new ol.style.Fill({ color: 'rgba(0, 255, 255, 0.1)' })
+                        })
+                    });
+                    lyrZ.setZIndex(zIndex);
+                    map.addLayer(lyrZ);
+                    console.log("Capa Zacatecas agregada por selección de Zacatecas");
+                }
+            } else {
+                // Si el estado es diferente o está vacío, se elimina la capa si existiera
+                if (lyrZ) {
+                    map.removeLayer(lyrZ);
+                    lyrZ = null;
+                    console.log("Capa Zacatecas removida porque el estado no es Zacatecas");
+                }
+            }
+
+
+    } else {
+        // Si no hay selección, oculta la tabla y el formulario
+        document.querySelector("#materialTable tbody").innerHTML = '';
+        document.getElementById('selectedMaterialContainer').style.display = 'none';
+        document.getElementById('reservationForm').style.display = 'none';
+    }
+}
+
+
+// Llama a la función para cargar materiales al cargar la página
+window.onload = fetchMaterialData;
+
+
+      </script>
+      <script>
+
+async function submitReservation(event) {
+    event.preventDefault(); // Evita la recarga de la página
+
+    const name = document.getElementById("name").value;
+    const quantity = document.getElementById("quantity").value;
+    const email = document.getElementById("email").value;
+    const reservationDate = document.getElementById("reservationDate").value; // Obtener la fecha seleccionada
+
+    // Obtén los valores del material seleccionado
+    const materialDropdown = document.getElementById("materialDropdown");
+    const selectedMaterialName = materialDropdown.options[materialDropdown.selectedIndex].text; // Nombre del material
+
+    // Validar que haya un material seleccionado
+    if (!materialDropdown.value) {
+        alert("Por favor selecciona un material.");
+        return;
+    }
+
+    try {
+        const response = await fetch("reserva.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name,
+                quantity,
+                email,
+                material: selectedMaterialName, // Enviar solo el nombre del material
+                reservationDate // Enviar la fecha seleccionada
+            }),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert("¡Reserva realizada exitosamente!");
+            document.getElementById("reservationForm").reset();
+        }
+    } catch (error) {
+        console.error("Error al realizar la reserva:", error);
+    }
+}
+
+
+
+              
+   </script>
+   </body>
+</html>

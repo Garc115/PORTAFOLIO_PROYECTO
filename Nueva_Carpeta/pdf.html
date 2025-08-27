@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <!-- Basic meta tags -->
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Capadoccia</title>
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="css/bootstrap.min.css">
+      <link rel="stylesheet" href="css/style.css">
+      <link rel="stylesheet" href="css/responsive.css">
+      <!-- jQuery UI CSS for Datepicker -->
+      <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+      <!-- jsPDF and jsPDF-AutoTable -->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable"></script>
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+   </head>
+   <body>
+      <header>
+         <div class="header">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-12 col-sm-3 col logo_section">
+                     <div class="logo">
+                        <a href="index.html"><img src="images/logo.png" alt="Logo"></a>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </header>
+
+      <section class="banner_main">
+         <div class="main-container">
+            <div class="login-container">
+               <form id="form-report" action="validar.php" method="POST">
+                  <h2>Reportes de Reservas</h2>
+                  <label for="fecha_inicio">Fecha de Inicio:</label>
+                  <input type="text" id="fecha_inicio" name="fecha_inicio" required>
+                  <label for="fecha_fin">Fecha de Fin:</label>
+                  <input type="text" id="fecha_fin" name="fecha_fin" required>
+                  <button class="login-button" type="submit" id="btnGenerarReporte">Generar Reporte</button>
+               </form>
+            </div>
+         </div>
+      </section>
+
+      <footer>
+         <div class="footer">
+            <div class="container">
+               <div class="row">
+                  <div class="col-md-3 col-sm-6">
+                     <ul class="social_icon">
+                        <li><a href="https://www.facebook.com/cappadociamineriaytopografia"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+                        <li><a href="#"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+                        <li><a href="#"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+                        <li><a href="https://www.instagram.com/cappadociamineriaytopografia/"><i class="fa fa-instagram" aria-hidden="true"></i></a></li>
+                     </ul>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </footer>
+
+      <script>
+        $(document).ready(function() {
+           // Inicialización del datepicker
+           $("#fecha_inicio, #fecha_fin").datepicker({ dateFormat: 'yy-mm-dd' });
+     
+           $('#btnGenerarReporte').click(function(e) {
+              e.preventDefault();
+     
+              // Obtener fechas seleccionadas
+              const fechaInicio = $("#fecha_inicio").val();
+              const fechaFin = $("#fecha_fin").val();
+     
+              if (!fechaInicio || !fechaFin) {
+                 alert('Por favor, selecciona ambas fechas.');
+                 return;
+              }
+     
+              // Obtener datos desde el servidor (PHP)
+              $.ajax({
+                 url: 'fetch_reservas.php',
+                 type: 'POST',
+                 data: { fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+                 dataType: 'json',
+                 success: function(data) {
+                    if (data.error) {
+                       alert("Error: " + data.error);
+                       return;
+                    }
+     
+                    // Crear el PDF con jsPDF
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    const pageWidth = doc.internal.pageSize.width;
+     
+                    // Agregar el logo y encabezado
+                    const logoURL = 'logo.PNG'; // Ruta del logo
+                    const logoX = 10;
+                    const logoY = 10;
+                    const logoWidth = 40;
+                    const logoHeight = 20;
+                    doc.addImage(logoURL, 'PNG', logoX, logoY, logoWidth, logoHeight);
+     
+                    // Encabezado a la derecha
+                    const marginRight = 10;
+                    const textX = pageWidth - marginRight;
+                    const lineSpacing = 5;
+                    const startY = 15;
+     
+                    doc.setFontSize(10);
+                    doc.text("Cappadocia Bufete Minero y Administrativo S.C.", textX, startY, { align: "right" });
+                    doc.text("Circuito Gómez Farías Sur. 225", textX, startY + lineSpacing, { align: "right" });
+                    doc.text("Col. Jardines del Estadio 2 C.P. 78280", textX, startY + lineSpacing * 2, { align: "right" });
+                    doc.text("San Luis Potosí, S.L.P.", textX, startY + lineSpacing * 3, { align: "right" });
+                    doc.text("pcarrillo@cappadocia.com.mx", textX, startY + lineSpacing * 4, { align: "right" });
+                    doc.text("Tel. (444) 8122 572 | Cel. (444) 173.63.33", textX, startY + lineSpacing * 5, { align: "right" });
+     
+                    // Título de la tabla
+                    const titleY = 70;
+                    doc.setFontSize(16);
+                    doc.text("Reservas Realizadas", pageWidth / 2, titleY, { align: "center" });
+     
+                    // Tabla de datos
+                    const tableStartY = 80;
+                    const columns = ["Nombre", "Cantidad", "Correo", "Material", "Fecha"]; // Agregar columna de fecha
+                    const rows = data.map(row => [
+                       row.nombre, 
+                       row.cantidad, 
+                       row.correo, 
+                       row.material, 
+                       row.fecha // Mostrar la fecha extraída de la base de datos
+                    ]);
+     
+                    doc.autoTable({
+                       head: [columns],
+                       body: rows,
+                       startY: tableStartY,
+                    });
+     
+                    // Descargar el PDF
+                    doc.save('reporte_reservas.pdf');
+                 },
+                 error: function(xhr, status, error) {
+                    alert('Ocurrió un error al obtener los datos.');
+                 }
+              });
+           });
+        });
+     </script>
+     
+   </body>
+</html>

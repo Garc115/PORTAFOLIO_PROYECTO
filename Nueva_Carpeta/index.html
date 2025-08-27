@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="utf-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Capadoccia</title>
+   <link rel="stylesheet" href="css/bootstrap.min.css">
+   <link rel="stylesheet" href="css/style.css">
+   <link rel="stylesheet" href="css/responsive.css">
+   <link rel="icon" href="images/fevicon.png" type="image/gif" />
+   <link rel="stylesheet" href="css/jquery.mCustomScrollbar.min.css">
+   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" media="screen">
+
+   <style>
+      .login-container {
+         max-width: 400px;
+         margin: auto;
+         padding: 20px;
+         background: rgba(255,255,255,0.95);
+         border-radius: 10px;
+         box-shadow: 0 0 15px rgba(0,0,0,0.1);
+         display: block; /* Asegúrate de que se muestre como un bloque */
+         visibility: visible; /* Asegúrate de que el contenedor sea visible */
+         opacity: 1; /* Asegúrate de que no esté transparente */
+      }
+
+      .login-form h2 {
+         text-align: center;
+         margin-bottom: 20px;
+      }
+
+      .form-group {
+         margin-bottom: 15px;
+      }
+
+      .login-button {
+         background-color: #0d6efd;
+         border: none;
+         color: white;
+         padding: 12px;
+         width: 100%;
+         font-weight: bold;
+         border-radius: 5px;
+         cursor: pointer;
+         text-align: center;
+         display: block;
+         text-decoration: none;
+      }
+
+      .login-button:hover {
+         background-color: #084298;
+      }
+
+      .google-button {
+         background-color: #dd4b39;
+         margin-top: 10px;
+      }
+
+      .google-button:hover {
+         background-color: #c23321;
+      }
+
+      #clerk-sign-in {
+         display: flex;
+         flex-direction: column;
+         align-items: center;
+         width: 100%;
+      }
+   </style>
+
+   <script
+      async
+      crossorigin="anonymous"
+      data-clerk-publishable-key="pk_test_c2hhcnAtY29kLTczLmNsZXJrLmFjY291bnRzLmRldiQ"
+      src="https://sharp-cod-73.clerk.accounts.dev/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+      type="text/javascript">
+   </script>
+   
+</head>
+
+<body class="main-layout">
+   <div class="loader_bg">
+      <div class="loader"><img src="images/loading.gif" alt="#"/></div>
+   </div>
+
+   <header>
+      <div class="header">
+         <div class="container">
+            <div class="row">
+               <div class="col-md-12 col-sm-3 col logo_section">
+                  <div class="full">
+                     <div class="center-desk">
+                        <div class="logo">
+                           <a href="index.php"><img src="images/logo.png" alt="#" /></a>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+   </header>
+
+   <section class="banner_main">
+      <div id="myCarousel" class="carousel slide banner" data-ride="carousel">
+         <div class="main-container">
+            <div class="login-container">
+               <!-- Aquí se montará el formulario de inicio de sesión de Clerk -->
+               <div id="clerk-sign-in"></div>
+            </div>
+         </div>
+      </div>
+   </section>
+
+   <footer>
+      <div class="footer">
+         <div class="container">
+            <div class="row">
+               <div class=" col-md-3 col-sm-6">
+                  <ul class="social_icon">
+                     <li><a href="https://www.facebook.com/cappadociamineriaytopografia"><i class="fa fa-facebook" aria-hidden="true"></i></a></li>
+                     <li><a href="#"><i class="fa fa-twitter" aria-hidden="true"></i></a></li>
+                     <li><a href="#"><i class="fa fa-linkedin" aria-hidden="true"></i></a></li>
+                     <li><a href="https://www.instagram.com/cappadociamineriaytopografia/"><i class="fa fa-instagram" aria-hidden="true"></i></a></li>
+                  </ul>
+               </div>
+            </div>
+         </div>
+      </div>
+   </footer>
+
+   <script src="js/jquery.min.js"></script>
+   <script src="js/bootstrap.bundle.min.js"></script>
+   <script src="js/jquery-3.0.0.min.js"></script>
+   <script src="js/jquery.mCustomScrollbar.concat.min.js"></script>
+   <script src="js/custom.js"></script>
+
+   <script>
+      window.addEventListener("load", function () {
+        if (window.Clerk) {
+          window.Clerk.load().then(async () => {
+            // Monta el formulario de inicio de sesión de Clerk
+            Clerk.mountSignIn(document.getElementById("clerk-sign-in"));
+    
+            const userSession = Clerk.session;
+    
+            if (userSession) {
+              // Obtiene el usuario actual
+              const user = await Clerk.user;
+              const userId = user.id;
+    
+              // ID del administrador (coloca aquí el ID real del admin)
+              const adminId = "user_2vV8b7FXQjgp7IfwjRfnML8BPhW"; // <-- reemplaza esto con el ID real de tu admin
+    
+              // Redirigir según el ID
+              if (userId === adminId) {
+                window.location.href = "admin.html";
+              } else {
+                window.location.href = "usuario.html";
+              }
+            } else {
+              Clerk.redirectToSignIn();
+            }
+          }).catch((error) => {
+            console.error("Error al cargar Clerk: ", error);
+          });
+        } else {
+          console.error("Clerk no está disponible");
+        }
+      });
+    </script>
+    
+</body>
+</html>
